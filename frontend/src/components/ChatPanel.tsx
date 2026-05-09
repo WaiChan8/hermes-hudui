@@ -4,6 +4,7 @@ import { useChat, useChatAvailability, useChatSessions, loadSavedSessions, loadM
 import SessionSidebar from './chat/SessionSidebar'
 import MessageThread from './chat/MessageThread'
 import Composer from './chat/Composer'
+import ChatDiagnostics from './chat/ChatDiagnostics'
 
 export default function ChatPanel() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
@@ -166,6 +167,17 @@ export default function ChatPanel() {
           {activeSessionId ? (
             <>
               <MessageThread messages={messages} isStreaming={isStreaming} onRegenerate={(id) => regenerate({ messageId: id })} />
+              <ChatDiagnostics
+                model={composerState.model}
+                status={composerState.status}
+                processStartMs={composerState.processStartMs}
+                firstTokenMs={composerState.firstTokenMs}
+                totalMs={composerState.totalMs}
+                resumed={composerState.resumed}
+                recentFirstTokenAvgMs={composerState.recentFirstTokenAvgMs}
+                recentTotalAvgMs={composerState.recentTotalAvgMs}
+                recentRuns={composerState.recentRuns}
+              />
               <Composer
                 onSend={handleSendMessage}
                 onCancel={cancelStream}

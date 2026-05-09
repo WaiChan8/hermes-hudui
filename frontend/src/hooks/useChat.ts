@@ -23,6 +23,11 @@ export interface ComposerState {
   elapsedMs: number
   firstTokenMs: number | null
   totalMs: number | null
+  processStartMs: number | null
+  resumed: boolean
+  recentFirstTokenAvgMs: number | null
+  recentTotalAvgMs: number | null
+  recentRuns: number
 }
 
 // ── localStorage helpers ───────────────────────────────────────────────────
@@ -131,6 +136,11 @@ export function useChat(sessionId: string | null) {
     elapsedMs: 0,
     firstTokenMs: null,
     totalMs: null,
+    processStartMs: null,
+    resumed: false,
+    recentFirstTokenAvgMs: null,
+    recentTotalAvgMs: null,
+    recentRuns: 0,
   })
 
   const loadComposerState = useCallback(async () => {
@@ -148,6 +158,11 @@ export function useChat(sessionId: string | null) {
           elapsedMs: state.elapsed_ms ?? 0,
           firstTokenMs: state.first_token_ms ?? null,
           totalMs: state.total_ms ?? null,
+          processStartMs: state.process_start_ms ?? null,
+          resumed: state.resumed ?? false,
+          recentFirstTokenAvgMs: state.recent_first_token_avg_ms ?? null,
+          recentTotalAvgMs: state.recent_total_avg_ms ?? null,
+          recentRuns: state.recent_runs ?? 0,
         })
       }
     } catch { /* best effort */ }

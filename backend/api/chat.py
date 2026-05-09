@@ -54,6 +54,11 @@ class ComposerStateResponse(BaseModel):
     elapsed_ms: int = 0
     first_token_ms: int | None = None
     total_ms: int | None = None
+    process_start_ms: int | None = None
+    resumed: bool = False
+    recent_first_token_avg_ms: int | None = None
+    recent_total_avg_ms: int | None = None
+    recent_runs: int = 0
 
 
 @router.post("/sessions", response_model=SessionResponse)
@@ -285,6 +290,11 @@ async def get_composer_state(session_id: str) -> ComposerStateResponse:
             elapsed_ms=state.elapsed_ms,
             first_token_ms=state.first_token_ms,
             total_ms=state.total_ms,
+            process_start_ms=state.process_start_ms,
+            resumed=state.resumed,
+            recent_first_token_avg_ms=state.recent_first_token_avg_ms,
+            recent_total_avg_ms=state.recent_total_avg_ms,
+            recent_runs=state.recent_runs,
         )
     except Exception as e:
         # Return default if session not found

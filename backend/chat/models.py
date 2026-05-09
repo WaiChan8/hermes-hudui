@@ -91,6 +91,11 @@ class ComposerState:
     elapsed_ms: int = 0
     first_token_ms: Optional[int] = None
     total_ms: Optional[int] = None
+    process_start_ms: Optional[int] = None
+    resumed: bool = False
+    recent_first_token_avg_ms: Optional[int] = None
+    recent_total_avg_ms: Optional[int] = None
+    recent_runs: int = 0
     current_tool: Optional[ToolCall] = None
     context_tokens: int = 0
     estimated_cost: float = 0.0

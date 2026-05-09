@@ -130,6 +130,10 @@ def test_completed_stream_is_removed_from_composer_state(monkeypatch):
     assert engine.get_composer_state(session.id).status == "complete"
     assert engine.get_composer_state(session.id).first_token_ms is not None
     assert engine.get_composer_state(session.id).total_ms is not None
+    assert engine.get_composer_state(session.id).process_start_ms is not None
+    assert engine.get_composer_state(session.id).recent_runs == 1
+    assert engine.get_composer_state(session.id).recent_first_token_avg_ms is not None
+    assert engine.get_composer_state(session.id).recent_total_avg_ms is not None
 
 
 def test_composer_state_uses_configured_model_when_session_model_is_empty(monkeypatch, tmp_path):

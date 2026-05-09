@@ -106,6 +106,7 @@ class ChatEngine:
         self._streamers: dict[str, ChatStreamer] = {}
         self._processes: dict[str, subprocess.Popen] = {}
         self._run_state: dict[str, dict[str, float | str | None]] = {}
+        self._run_history: dict[str, list[dict[str, int | bool | str | None]]] = {}
         self._initialized = True
         self._hermes_path = shutil.which("hermes")
         self._cli_available = self._check_cli()
@@ -235,6 +236,7 @@ class ChatEngine:
             "process_started_at": None,
             "first_token_at": None,
             "finished_at": None,
+            "resumed": bool(session.hermes_session_id),
         }
 
         # Build command: hermes chat -q "message" -Q (quiet mode)
@@ -396,6 +398,7 @@ class ChatEngine:
             finally:
                 if session_id in self._run_state:
                     self._run_state[session_id]["finished_at"] = time.monotonic()
+                    self._record_run_history(session_id)
                 self._processes.pop(session_id, None)
                 if self._streamers.get(session_id) is streamer:
                     self._streamers.pop(session_id, None)
@@ -429,6 +432,36 @@ class ChatEngine:
         if session_id in self._run_state:
             self._run_state[session_id]["status"] = "cancelled"
             self._run_state[session_id]["finished_at"] = time.monotonic()
+            self._record_run_history(session_id)
+
+    def _record_run_history(self, session_id: str) -> None:
+        """Store a compact timing summary for recent chat turns."""
+        state = self._run_state.get(session_id) or {}
+        started_at = state.get("started_at")
+        finished_at = state.get("finished_at")
+        if not isinstance(started_at, float) or not isinstance(finished_at, float):
+            return
+
+        process_started_at = state.get("process_started_at")
+        first_token_at = state.get("first_token_at")
+        sample = {
+            "status": str(state.get("status") or "unknown"),
+            "process_start_ms": (
+                int((process_started_at - started_at) * 1000)
+                if isinstance(process_started_at, float)
+                else None
+            ),
+            "first_token_ms": (
+                int((first_token_at - started_at) * 1000)
+                if isinstance(first_token_at, float)
+                else None
+            ),
+            "total_ms": int((finished_at - started_at) * 1000),
+            "resumed": bool(state.get("resumed")),
+        }
+        history = self._run_history.setdefault(session_id, [])
+        history.append(sample)
+        del history[:-20]
 
     def get_composer_state(self, session_id: str) -> ComposerState:
         """Get current composer state for UI."""
@@ -447,6 +480,7 @@ class ChatEngine:
         run_state = self._run_state.get(session_id) or {}
         started_at = run_state.get("started_at")
         first_token_at = run_state.get("first_token_at")
+        process_started_at = run_state.get("process_started_at")
         finished_at = run_state.get("finished_at")
         now = time.monotonic()
         end_at = finished_at if isinstance(finished_at, float) else now
@@ -457,6 +491,11 @@ class ChatEngine:
             if isinstance(started_at, float) and isinstance(first_token_at, float)
             else None
         )
+        process_start_ms = (
+            int((process_started_at - started_at) * 1000)
+            if isinstance(started_at, float) and isinstance(process_started_at, float)
+            else None
+        )
         total_ms = (
             int((finished_at - started_at) * 1000)
             if isinstance(started_at, float) and isinstance(finished_at, float)
@@ -464,6 +503,17 @@ class ChatEngine:
         )
 
         status = str(run_state.get("status") or ("streaming" if is_streaming else "idle"))
+        history = self._run_history.get(session_id, [])
+        first_token_samples = [
+            item["first_token_ms"]
+            for item in history
+            if isinstance(item.get("first_token_ms"), int)
+        ]
+        total_samples = [
+            item["total_ms"]
+            for item in history
+            if isinstance(item.get("total_ms"), int)
+        ]
 
         return ComposerState(
             model=session.model or self._configured_model(session.profile),
@@ -472,6 +522,19 @@ class ChatEngine:
             elapsed_ms=elapsed_ms,
             first_token_ms=first_token_ms,
             total_ms=total_ms,
+            process_start_ms=process_start_ms,
+            resumed=bool(run_state.get("resumed")),
+            recent_first_token_avg_ms=(
+                int(sum(first_token_samples) / len(first_token_samples))
+                if first_token_samples
+                else None
+            ),
+            recent_total_avg_ms=(
+                int(sum(total_samples) / len(total_samples))
+                if total_samples
+                else None
+            ),
+            recent_runs=len(history),
             context_tokens=0,
         )
 

@@ -13,6 +13,8 @@ def test_chat_panel_refreshes_backend_composer_state() -> None:
     assert "[activeSessionId, isStreaming, loadComposerState]" in panel
     assert "status={composerState.status}" in panel
     assert "firstTokenMs={composerState.firstTokenMs}" in panel
+    assert "<ChatDiagnostics" in panel
+    assert "recentFirstTokenAvgMs={composerState.recentFirstTokenAvgMs}" in panel
 
 
 def test_chat_composer_shows_stage_and_latency() -> None:
@@ -24,3 +26,14 @@ def test_chat_composer_shows_stage_and_latency() -> None:
     assert "first token" in composer
     assert "status: state.status" in hook
     assert "firstTokenMs: state.first_token_ms" in hook
+    assert "recentFirstTokenAvgMs: state.recent_first_token_avg_ms" in hook
+
+
+def test_chat_diagnostics_panel_shows_latency_breakdown() -> None:
+    diagnostics = (ROOT / "frontend/src/components/chat/ChatDiagnostics.tsx").read_text()
+
+    assert "Spawn" in diagnostics
+    assert "First Token" in diagnostics
+    assert "Resume" in diagnostics
+    assert "recentFirstTokenAvgMs" in diagnostics
+    assert "recentTotalAvgMs" in diagnostics
