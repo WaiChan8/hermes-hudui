@@ -41,6 +41,7 @@ def test_v080_release_docs_and_assets_are_in_sync() -> None:
 def test_replay_launch_docs_and_assets_are_present() -> None:
     readme = (ROOT / "README.md").read_text()
     changelog = (ROOT / "CHANGELOG.md").read_text()
+    release_notes = (ROOT / "docs/releases/v0.9.0.md").read_text()
 
     assert "## Hermes Replay" in readme
     assert "assets/replay-tab.png" in readme
@@ -50,6 +51,17 @@ def test_replay_launch_docs_and_assets_are_present() -> None:
 
     assert "**Hermes Replay**" in changelog
     assert "Replay launch assets" in changelog
+    assert "## [0.9.0] — 2026-05-09" in changelog
+    assert "Replay layout polish" in changelog
+    assert "Chat latency diagnostics" in changelog
+    assert "GitHub Actions CI" in changelog
+
+    assert "# hermes-hudui v0.9.0" in release_notes
+    assert "Hermes Replay" in release_notes
+    assert "Hermes Teal Default" in release_notes
+    assert "Chat Diagnostics" in release_notes
+    assert "GitHub Actions CI" in release_notes
+    assert "assets/replay-tab.png" in release_notes
 
     assert (ROOT / "assets" / "replay-tab.png").exists()
     example = ROOT / "assets" / "example-replay.redacted.json"

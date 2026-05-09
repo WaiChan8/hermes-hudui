@@ -4,9 +4,26 @@ All notable changes to hermes-hudui are documented here.
 
 ## [Unreleased]
 
+---
+
+## [0.9.0] — 2026-05-09
+
 ### Added
-- **Hermes Replay** — new Replay and Verify tabs turn local Hermes sessions into redacted run receipts with normalized timelines, proof artifacts, redaction review, Safe Share Mode exports, local hashes, Ed25519 signatures, fork JSON, share-card PNGs, static HTML/Markdown/JSON exports, and local public/unlisted publish directories.
+- **Hermes Replay** — new Replay tab turns local Hermes sessions into redacted run receipts with normalized timelines, proof artifacts, redaction review, Safe Share Mode exports, local hashes, Ed25519 signatures, fork JSON, share-card PNGs, static HTML/Markdown/JSON exports, and local public/unlisted publish directories.
 - **Replay launch assets** — README now documents local-only export behavior and includes the Replay tab screenshot plus an example redacted replay artifact.
+- **Replay verification** — receipt verification now lives inside Replay as a collapsible export check instead of a separate top-level tab.
+- **Chat latency diagnostics** — Chat now surfaces process spawn time, first-token latency, total turn time, resume state, and recent averages, with a local benchmark helper for comparing HUD streaming against the raw Hermes CLI.
+- **GitHub Actions CI** — pushes and pull requests now run Python tests and the frontend production build.
+
+### Changed
+- **Replay layout polish** — the timeline now uses the main detail space beside Replay Runs, while receipt, proof score, redaction, export, share preview, settings, and verification are consolidated in the right column.
+- **Replay export actions** — export controls are grouped as Prepare, Export, Share Images, and Publish so the right column is easier to scan.
+- **Default theme** — Hermes Teal is now the default first-load theme, and the theme picker is visibly labeled and no longer clipped by the top bar.
+
+### Verification
+- `pytest`
+- `cd frontend && npm run build`
+- Browser E2E coverage for Replay redaction scan, JSON/Markdown/HTML exports, PNG generation, local publish, and receipt verification.
 
 ---
 
