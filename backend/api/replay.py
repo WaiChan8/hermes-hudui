@@ -22,6 +22,12 @@ from backend.services.replay_exporter import (
     unpublish_replay,
     update_replay_settings,
 )
+from backend.services.replay_publisher import (
+    PublishError,
+    remote_status,
+    sync_remote,
+    update_remote_settings,
+)
 from backend.services.replay_redactor import apply_manual_redactions, scan_replay
 from backend.services.replay_verifier import verify_replay_files
 
@@ -52,6 +58,13 @@ class ReplayPublishRequest(BaseModel):
     visibility: str = "unlisted"
 
 
+class ReplayRemoteSettingsRequest(BaseModel):
+    enabled: bool = False
+    repo: str = Field(default="", max_length=300)
+    branch: str = Field(default="gh-pages", max_length=100)
+    base_url: str = Field(default="", max_length=300)
+
+
 @router.get("/replay/runs")
 async def get_replay_runs(limit: int = Query(50, ge=1, le=500)):
     return {"runs": to_dict(list_replay_runs(limit=limit))}
@@ -80,6 +93,25 @@ async def put_settings(request: ReplaySettingsRequest):
 @router.post("/replay/verify")
 async def verify_replay(request: ReplayVerifyRequest):
     return verify_replay_files(request.receipt_path, request.replay_path)
+
+
+@router.get("/replay/remote")
+async def get_remote():
+    return remote_status()
+
+
+@router.put("/replay/remote")
+async def put_remote(request: ReplayRemoteSettingsRequest):
+    update_remote_settings(request.model_dump())
+    return remote_status()
+
+
+@router.post("/replay/remote/sync")
+async def sync_remote_gallery():
+    try:
+        return sync_remote()
+    except PublishError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/replay/runs/{session_id}")

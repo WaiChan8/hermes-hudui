@@ -62,6 +62,10 @@ An example sanitized payload is included at [`assets/example-replay.redacted.jso
 
 Safe Share Mode is the default export posture. It redacts raw tool arguments, terminal output, assistant reasoning, token-like values, emails, local paths, and other sensitive fields before writing share artifacts. Exports include local hashes and Ed25519 signatures generated on this machine; they prove local artifact integrity, not external third-party attestation.
 
+### Remote publishing (optional)
+
+Locally published replays can be synced to a static host as a public gallery. In the Replay tab's Remote Publishing panel, configure a git repository (`owner/name` for GitHub Pages, or any git URL) and a branch, then press Sync now. The sync builds a static site from your published replays — public replays are listed on the gallery index; unlisted replays are reachable only through an unguessable hash path — and pushes it with your normal git credentials. Remote publishing is off by default, sync only happens when you trigger it, and only Safe-Share-Mode artifacts are ever included; local filesystem paths and publish manifests never leave the machine.
+
 ## Language Support
 
 English (default) and Chinese. Click the language toggle at the far right of the header bar to switch. The choice persists to localStorage. When set to Chinese, chat responses from your agent also come back in Chinese.

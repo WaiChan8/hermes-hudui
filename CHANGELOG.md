@@ -4,6 +4,9 @@ All notable changes to hermes-hudui are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Replay remote publishing** — sync locally published replays to a static host (GitHub Pages or any git-backed site) from the new Remote Publishing panel. Builds a deployable gallery with relative links: public replays are indexed, unlisted replays live behind unguessable hash paths, and local filesystem paths/manifests are never shipped. Off by default; nothing is uploaded until the user configures a remote and explicitly syncs. Endpoints: `GET/PUT /api/replay/remote`, `POST /api/replay/remote/sync`.
+
 ---
 
 ## [0.9.1] — 2026-06-11

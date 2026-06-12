@@ -524,6 +524,145 @@ function ReplaySettingsPanel() {
   )
 }
 
+function RemotePublishPanel() {
+  const { data, mutate } = useApi<any>('/replay/remote', 30000)
+  const [draft, setDraft] = useState<{ repo: string; branch: string; base_url: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
+
+  const settings = data?.settings
+  const form = draft ?? {
+    repo: settings?.repo || '',
+    branch: settings?.branch || 'gh-pages',
+    base_url: settings?.base_url || '',
+  }
+
+  const save = async (enabled: boolean) => {
+    setBusy(true)
+    setStatus(null)
+    try {
+      const res = await fetch('/api/replay/remote', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled, ...form }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      await mutate(await res.json(), false)
+      setDraft(null)
+      setStatus('Settings saved.')
+    } catch (err) {
+      setStatus(`Save failed: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const sync = async () => {
+    setBusy(true)
+    setStatus('Syncing to remote...')
+    try {
+      const res = await fetch('/api/replay/remote/sync', { method: 'POST' })
+      const body = await res.json()
+      if (!res.ok) throw new Error(body.detail || 'sync failed')
+      setStatus(
+        body.up_to_date
+          ? 'Remote already up to date.'
+          : `Pushed ${body.public_count} public, ${body.unlisted_count} unlisted → ${body.index_url}`
+      )
+      await mutate()
+    } catch (err) {
+      setStatus(`Sync failed: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!data) {
+    return (
+      <Panel title="Remote Publishing">
+        <div className="text-[13px] animate-pulse" style={{ color: 'var(--hud-text-dim)' }}>Loading remote settings...</div>
+      </Panel>
+    )
+  }
+
+  const inputStyle = {
+    background: 'var(--hud-bg-deep)',
+    border: '1px solid var(--hud-border)',
+    color: 'var(--hud-text)',
+  }
+  const lastSync = data.last_sync
+
+  return (
+    <Panel title="Remote Publishing">
+      <div className="space-y-2 text-[13px]">
+        <div className="text-[12px]" style={{ color: 'var(--hud-text-dim)' }}>
+          Push published replays to a static host (GitHub Pages). Nothing is uploaded unless you sync.
+        </div>
+        {([
+          ['repo', 'Repository (owner/name or git URL)', 'joeynyc/hermes-replays'],
+          ['branch', 'Branch', 'gh-pages'],
+          ['base_url', 'Base URL (optional, derived for GitHub Pages)', ''],
+        ] as Array<[keyof typeof form, string, string]>).map(([key, label, placeholder]) => (
+          <label key={key} className="block">
+            <span className="uppercase tracking-wider text-[11px]" style={{ color: 'var(--hud-text-dim)' }}>{label}</span>
+            <input
+              value={form[key]}
+              placeholder={placeholder}
+              onChange={event => setDraft({ ...form, [key]: event.target.value })}
+              className="w-full mt-1 px-2 py-1 text-[13px] outline-none"
+              style={inputStyle}
+            />
+          </label>
+        ))}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => save(true)}
+            disabled={busy || !form.repo.trim()}
+            className="px-2 py-1 text-[12px] cursor-pointer"
+            style={{ background: 'var(--hud-primary)', color: 'var(--hud-bg-deep)', opacity: busy || !form.repo.trim() ? 0.5 : 1 }}
+          >
+            {settings?.enabled ? 'Save' : 'Save & Enable'}
+          </button>
+          {settings?.enabled && (
+            <>
+              <button
+                onClick={sync}
+                disabled={busy || !data.git_available}
+                className="px-2 py-1 text-[12px] cursor-pointer"
+                style={{ border: '1px solid var(--hud-primary)', color: 'var(--hud-primary)', opacity: busy ? 0.5 : 1 }}
+              >
+                Sync now
+              </button>
+              <button
+                onClick={() => save(false)}
+                disabled={busy}
+                className="px-2 py-1 text-[12px] cursor-pointer"
+                style={{ border: '1px solid var(--hud-border)', color: 'var(--hud-text-dim)' }}
+              >
+                Disable
+              </button>
+            </>
+          )}
+        </div>
+        {!data.git_available && (
+          <div className="text-[12px]" style={{ color: 'var(--hud-warning)' }}>git is not available on PATH.</div>
+        )}
+        {status && <div className="text-[12px]" style={{ color: status.includes('failed') ? 'var(--hud-error)' : 'var(--hud-success)' }}>{status}</div>}
+        {lastSync && (
+          <div className="text-[12px] space-y-1" style={{ color: 'var(--hud-text-dim)' }}>
+            <div>Last sync: {formatDate(lastSync.synced_at)} ({lastSync.public_count} public, {lastSync.unlisted_count} unlisted)</div>
+            {lastSync.base_url && (
+              <a href={lastSync.index_url} target="_blank" rel="noreferrer" className="block truncate" style={{ color: 'var(--hud-primary)' }}>
+                {lastSync.index_url}
+              </a>
+            )}
+          </div>
+        )}
+      </div>
+    </Panel>
+  )
+}
+
 function Metric({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -803,6 +942,7 @@ export default function ReplayPanel() {
               <ExportActions sessionId={detail.run.source_session_id} />
               <ShareCardPreview detail={detail} />
               <ReplaySettingsPanel />
+              <RemotePublishPanel />
               <VerifyReplaySection />
               {detail.missing_data.length > 0 && (
                 <Panel title="Missing Data">
