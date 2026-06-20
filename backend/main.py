@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Hermes HUD",
-    version="0.1.0",
+    version="0.9.1",
     lifespan=lifespan,
 )
 

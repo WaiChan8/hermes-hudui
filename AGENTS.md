@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## What This Is
 
-Hermes HUD Web UI — a browser-based dashboard for monitoring the Hermes AI agent. It reads agent data from `~/.hermes/` and displays identity, memory, skills, sessions, cron jobs, projects, costs, activity patterns, corrections, sudo governance, and live chat across 14 tabs.
+Hermes HUD Web UI — a browser-based dashboard for monitoring the Hermes AI agent. It reads agent data from `~/.hermes/` and displays identity, memory, skills, sessions, cron jobs, projects, costs, activity patterns, corrections, sudo governance, and live chat across 19 tabs.
 
 ## Commands
 

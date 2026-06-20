@@ -15,8 +15,6 @@ from ..chat import (
     ChatSession,
     chat_engine,
 )
-from ..collectors.sessions import collect_sessions
-
 router = APIRouter(prefix="/chat", tags=["chat"])
 
 
@@ -24,11 +22,6 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 class CreateSessionRequest(BaseModel):
     profile: str | None = None
     model: str | None = None
-
-
-class SendMessageRequest(BaseModel):
-    content: str
-    lang: str | None = None
 
 
 class AISDKSendRequest(BaseModel):
@@ -125,32 +118,6 @@ async def end_session(session_id: str) -> dict[str, str]:
     raise HTTPException(status_code=404, detail="Session not found")
 
 
-@router.post("/sessions/{session_id}/send")
-async def send_message(session_id: str, request: SendMessageRequest) -> dict[str, str]:
-    """Send a message to a session."""
-    session = chat_engine.get_session(session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    if not session.is_active:
-        raise HTTPException(status_code=409, detail="Session is inactive")
-
-    message = request.content
-    if request.lang and request.lang != "en":
-        lang_names = {"zh": "Chinese", "ja": "Japanese", "ko": "Korean", "es": "Spanish", "fr": "French", "de": "German"}
-        lang_name = lang_names.get(request.lang, request.lang)
-        message = f"[Respond in {lang_name}] {message}"
-
-    # Send message - this creates the streamer
-    try:
-        chat_engine.send_message(session_id, message)
-        return {"status": "accepted", "session_id": session_id}
-    except ChatNotAvailableError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.post("/sessions/{session_id}/message")
 async def send_and_stream(
     session_id: str, request: AISDKSendRequest
@@ -208,46 +175,6 @@ async def send_and_stream(
     )
 
 
-@router.get("/sessions/{session_id}/stream")
-async def stream_response(session_id: str) -> StreamingResponse:
-    """Stream chat response via SSE."""
-    session = chat_engine.get_session(session_id)
-    if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
-
-    if not session.is_active:
-        raise HTTPException(status_code=409, detail="Session is inactive")
-
-    try:
-        # This is called when user sends a message via POST first
-        # The streamer was created during that call
-        streamer = chat_engine._streamers.get(session_id)
-
-        if not streamer:
-            # No active stream, return error
-            raise HTTPException(
-                status_code=400, detail="No active message stream. Send message first."
-            )
-
-        def event_generator():
-            """Generate SSE events."""
-            for event in streamer.iter_events():
-                yield streamer.to_sse(event)
-
-        return StreamingResponse(
-            event_generator(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no",  # Disable nginx buffering
-            },
-        )
-
-    except ChatNotAvailableError as e:
-        raise HTTPException(status_code=503, detail=str(e))
-
-
 @router.post("/sessions/{session_id}/cancel")
 async def cancel_stream(session_id: str) -> dict[str, str]:
     """Cancel an active streaming response by killing the subprocess."""
@@ -257,24 +184,6 @@ async def cancel_stream(session_id: str) -> dict[str, str]:
 
     chat_engine.cancel_stream(session_id)
     return {"status": "cancelled", "session_id": session_id}
-
-
-@router.get("/sessions/{session_id}/history")
-async def get_history(session_id: str, limit: int = 50) -> list[dict[str, Any]]:
-    """Get message history for a session from state.db."""
-    # This reads from the existing sessions collector
-    # We just need to filter by session_id
-    sessions_state = collect_sessions()
-
-    # Find session in database
-    for session in sessions_state.recent_sessions:
-        if session.session_id == session_id:
-            # Get detailed messages from state.db
-            # This would need a new collector to read messages table
-            # For now, return placeholder
-            return []
-
-    return []
 
 
 @router.get("/sessions/{session_id}/composer", response_model=ComposerStateResponse)

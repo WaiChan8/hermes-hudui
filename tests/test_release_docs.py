@@ -9,7 +9,7 @@ def test_v080_release_docs_and_assets_are_in_sync() -> None:
     changelog = (ROOT / "CHANGELOG.md").read_text()
     release_notes = (ROOT / "docs/releases/v0.8.0.md").read_text()
 
-    assert "18 tabs" in readme
+    assert "19 tabs" in readme
     assert "Hermes Teal" in readme
     assert "Plugin Hub" in readme
     assert "Gateway Managed Tools" in readme

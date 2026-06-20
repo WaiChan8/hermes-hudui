@@ -32,7 +32,7 @@ source venv/bin/activate && hermes-hudui
 
 ## What's Inside
 
-18 tabs covering everything your agent knows about itself — executive dashboard, identity, memory, skills, sessions, cron jobs, projects, health diagnostics, costs, model analytics, patterns, corrections, sudo governance, live chat, connected OAuth providers, gateway control, plugin management, and live model capabilities.
+19 tabs covering everything your agent knows about itself — executive dashboard, identity, memory, skills, sessions, replay, cron jobs, projects, health diagnostics, costs, model analytics, patterns, corrections, sudo governance, live chat, connected OAuth providers, gateway control, plugin management, and live model capabilities.
 
 The Dashboard opens with an executive summary: health, spend pulse, top model, provider/gateway risk, highest-cost session, and action items. Health reacts to filesystem and WebSocket updates, while expensive refresh paths stay throttled.
 
