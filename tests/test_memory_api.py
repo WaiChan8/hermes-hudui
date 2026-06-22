@@ -165,15 +165,8 @@ def test_atomic_writes_leave_no_temp_files(hermes_home: Path) -> None:
     assert leftovers == []
 
 
-def test_memory_routes_are_registered() -> None:
-    from backend.main import app
-
-    methods = {
-        (method, route.path)
-        for route in app.routes
-        for method in getattr(route, "methods", set())
-    }
-    assert ("GET", "/api/memory") in methods
-    assert ("POST", "/api/memory") in methods
-    assert ("PUT", "/api/memory") in methods
-    assert ("DELETE", "/api/memory") in methods
+def test_memory_routes_are_registered(registered_routes) -> None:
+    assert ("GET", "/api/memory") in registered_routes
+    assert ("POST", "/api/memory") in registered_routes
+    assert ("PUT", "/api/memory") in registered_routes
+    assert ("DELETE", "/api/memory") in registered_routes

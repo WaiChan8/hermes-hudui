@@ -146,13 +146,6 @@ def test_missing_hermes_binary_returns_503(monkeypatch) -> None:
     assert exc.value.status_code == 503
 
 
-def test_cron_mutation_routes_are_registered() -> None:
-    from backend.main import app
-
-    methods = {
-        (method, route.path)
-        for route in app.routes
-        for method in getattr(route, "methods", set())
-    }
-    assert ("POST", "/api/cron") in methods
-    assert ("DELETE", "/api/cron/{job_id}") in methods
+def test_cron_mutation_routes_are_registered(registered_routes) -> None:
+    assert ("POST", "/api/cron") in registered_routes
+    assert ("DELETE", "/api/cron/{job_id}") in registered_routes

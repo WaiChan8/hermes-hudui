@@ -1,12 +1,10 @@
 import asyncio
 
 from backend.api.replay import build_replay_run, router
-from backend.main import app
 
 
-def test_replay_routes_are_registered() -> None:
-    paths = {route.path for route in app.routes}
-    methods = {(method, route.path) for route in app.routes for method in getattr(route, "methods", set())}
+def test_replay_routes_are_registered(registered_routes) -> None:
+    paths = {path for _, path in registered_routes}
 
     assert "/api/replay/runs" in paths
     assert "/api/replay/runs/{session_id}" in paths
@@ -19,7 +17,7 @@ def test_replay_routes_are_registered() -> None:
     assert "/api/replay/skills" in paths
     assert "/api/replay/gallery" in paths
     assert "/api/replay/verify" in paths
-    assert ("DELETE", "/api/replay/runs/{session_id}/publish") in methods
+    assert ("DELETE", "/api/replay/runs/{session_id}/publish") in registered_routes
 
 
 def test_build_endpoint_returns_serialized_replay(monkeypatch) -> None:

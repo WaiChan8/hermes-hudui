@@ -147,13 +147,6 @@ def test_update_leaves_no_temp_files(hermes_home: Path) -> None:
     assert leftovers == []
 
 
-def test_profile_edit_routes_are_registered() -> None:
-    from backend.main import app
-
-    methods = {
-        (method, route.path)
-        for route in app.routes
-        for method in getattr(route, "methods", set())
-    }
-    assert ("GET", "/api/profiles/{profile_name}/edit") in methods
-    assert ("PUT", "/api/profiles/{profile_name}/edit") in methods
+def test_profile_edit_routes_are_registered(registered_routes) -> None:
+    assert ("GET", "/api/profiles/{profile_name}/edit") in registered_routes
+    assert ("PUT", "/api/profiles/{profile_name}/edit") in registered_routes
